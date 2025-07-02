@@ -1,0 +1,21 @@
+{
+  "name": "newsletter-app",
+  "version": "1.0.0",
+  "description": "A newsletter and subscription web application",
+  "main": "index.js",  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd backend && npm start",
+    "client": "cd frontend && npm start",
+    "build": "cd frontend && npm run build",
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "setup": "node setup.js",
+    "database-setup": "node database-setup.js",
+    "seed": "cd backend && npm run seed"
+  },
+  "keywords": ["newsletter", "subscription", "react", "nodejs", "express"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
