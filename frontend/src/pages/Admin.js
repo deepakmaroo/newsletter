@@ -10,7 +10,9 @@ import {
   updateNewsletter,
   deleteNewsletter,
   fetchAllSubscriptions,
-  sendNewsletter
+  sendNewsletter,
+  subscribeToNewsletter,
+  unsubscribeFromNewsletter
 } from '../utils/api';
 
 const Admin = () => {
@@ -68,6 +70,28 @@ const Admin = () => {
     onSuccess: (data) => toast.success(data.message || 'Newsletter sent!'),
     onError: () => toast.error('Failed to send newsletter')
   });
+
+  // Mutations for subscriber management
+  const unsubscribeMutation = useMutation(
+    (email) => unsubscribeFromNewsletter(email),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['admin-subscribers', token]);
+        toast.success('Subscriber unsubscribed');
+      },
+      onError: () => toast.error('Failed to unsubscribe')
+    }
+  );
+  const resubscribeMutation = useMutation(
+    (email) => subscribeToNewsletter(email),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['admin-subscribers', token]);
+        toast.success('Subscriber resubscribed');
+      },
+      onError: () => toast.error('Failed to resubscribe')
+    }
+  );
 
   // Newsletter form logic
   const {
@@ -347,6 +371,7 @@ const Admin = () => {
                 <tr>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Subscribed At</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -354,6 +379,13 @@ const Admin = () => {
                   <tr key={s.id || s._id} className="hover:bg-gray-50">
                     <td className="px-4 py-2">{s.email}</td>
                     <td className="px-4 py-2">{new Date(s.subscribedAt).toLocaleString()}</td>
+                    <td className="px-4 py-2 space-x-2">
+                      {s.isActive ? (
+                        <button className="btn-danger" onClick={() => unsubscribeMutation.mutate(s.email)}>Unsubscribe</button>
+                      ) : (
+                        <button className="btn-primary" onClick={() => resubscribeMutation.mutate(s.email)}>Resubscribe</button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

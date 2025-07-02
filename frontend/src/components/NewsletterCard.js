@@ -28,7 +28,7 @@ const NewsletterCard = ({ newsletter }) => {
         </p>
         
         <Link
-          to={`/newsletter/${newsletter._id}`}
+          to={`/newsletter/${newsletter.id || newsletter._id}`}
           className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors duration-200"
         >
           Read more
