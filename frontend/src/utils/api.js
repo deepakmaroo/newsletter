@@ -82,4 +82,11 @@ export const fetchAllSubscriptions = async (token) => {
   return response.data;
 };
 
+export const sendNewsletter = async (id, token) => {
+  const response = await api.post(`/newsletters/${id}/send`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
+};
+
 export default api;

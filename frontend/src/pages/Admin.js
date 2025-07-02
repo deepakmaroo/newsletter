@@ -3,14 +3,104 @@ import { useForm } from 'react-hook-form';
 import { Shield, Eye, EyeOff, Users, FileText, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { loginAdmin } from '../utils/api';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import {
+  fetchAllNewsletters,
+  createNewsletter,
+  updateNewsletter,
+  deleteNewsletter,
+  fetchAllSubscriptions,
+  sendNewsletter
+} from '../utils/api';
 
 const Admin = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [token, setToken] = useState('');
+  const [editingNewsletter, setEditingNewsletter] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const queryClient = useQueryClient();
   
   const { register, handleSubmit, formState: { errors } } = useForm();
+
+  // Fetch newsletters
+  const { data: newsletters = [], isLoading: loadingNewsletters } = useQuery(
+    ['admin-newsletters', token],
+    () => fetchAllNewsletters(token),
+    { enabled: isLoggedIn }
+  );
+
+  // Fetch subscribers
+  const { data: subscriberData = { count: 0, subscriptions: [] }, isLoading: loadingSubs } = useQuery(
+    ['admin-subscribers', token],
+    () => fetchAllSubscriptions(token),
+    { enabled: isLoggedIn }
+  );
+
+  // Mutations
+  const createMutation = useMutation((data) => createNewsletter(data, token), {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-newsletters', token]);
+      setShowForm(false);
+      setEditingNewsletter(null);
+      toast.success('Newsletter created!');
+    },
+    onError: () => toast.error('Failed to create newsletter')
+  });
+  const updateMutation = useMutation(({ id, data }) => updateNewsletter(id, data, token), {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-newsletters', token]);
+      setShowForm(false);
+      setEditingNewsletter(null);
+      toast.success('Newsletter updated!');
+    },
+    onError: () => toast.error('Failed to update newsletter')
+  });
+  const deleteMutation = useMutation((id) => deleteNewsletter(id, token), {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-newsletters', token]);
+      toast.success('Newsletter deleted!');
+    },
+    onError: () => toast.error('Failed to delete newsletter')
+  });
+  const sendMutation = useMutation((id) => sendNewsletter(id, token), {
+    onSuccess: (data) => toast.success(data.message || 'Newsletter sent!'),
+    onError: () => toast.error('Failed to send newsletter')
+  });
+
+  // Newsletter form logic
+  const {
+    register: formRegister,
+    handleSubmit: handleFormSubmit,
+    reset: resetForm,
+    formState: { errors: formErrors }
+  } = useForm();
+
+  const onSubmitNewsletter = (data) => {
+    if (editingNewsletter) {
+      updateMutation.mutate({ id: editingNewsletter.id || editingNewsletter._id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = (newsletter) => {
+    setEditingNewsletter(newsletter);
+    setShowForm(true);
+    resetForm({
+      title: newsletter.title,
+      content: newsletter.content,
+      excerpt: newsletter.excerpt,
+      published: newsletter.published
+    });
+  };
+
+  const handleCreate = () => {
+    setEditingNewsletter(null);
+    setShowForm(true);
+    resetForm({ title: '', content: '', excerpt: '', published: false });
+  };
 
   const onLogin = async (data) => {
     setIsLoading(true);
@@ -135,40 +225,32 @@ const Admin = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <button
-          onClick={handleLogout}
-          className="btn-secondary"
-        >
-          Logout
-        </button>
+        <button onClick={handleLogout} className="btn-secondary">Logout</button>
       </div>
 
-      {/* Dashboard Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex items-center">
             <FileText className="h-8 w-8 text-blue-600 mr-3" />
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Newsletters</h3>
-              <p className="text-gray-600">Manage your content</p>
+              <p className="text-gray-600">{loadingNewsletters ? 'Loading...' : newsletters.length}</p>
             </div>
           </div>
         </div>
-
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex items-center">
             <Users className="h-8 w-8 text-green-600 mr-3" />
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Subscribers</h3>
-              <p className="text-gray-600">View your audience</p>
+              <p className="text-gray-600">{loadingSubs ? 'Loading...' : subscriberData.count}</p>
             </div>
           </div>
         </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white rounded-lg shadow-sm p-6 cursor-pointer" onClick={handleCreate}>
           <div className="flex items-center">
             <Plus className="h-8 w-8 text-purple-600 mr-3" />
             <div>
@@ -179,19 +261,105 @@ const Admin = () => {
         </div>
       </div>
 
-      {/* Placeholder for dashboard content */}
-      <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Welcome to the Admin Dashboard</h2>
-        <p className="text-gray-600 mb-6">
-          This is a basic admin interface. In a full implementation, you would see:
-        </p>
-        <ul className="text-left max-w-md mx-auto space-y-2 text-gray-600">
-          <li>• Newsletter creation and editing interface</li>
-          <li>• Subscriber management</li>
-          <li>• Analytics and statistics</li>
-          <li>• Email campaign management</li>
-          <li>• Content scheduling</li>
-        </ul>
+      {/* Newsletter Form */}
+      {showForm && (
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+          <h2 className="text-xl font-bold mb-4">{editingNewsletter ? 'Edit Newsletter' : 'Create Newsletter'}</h2>
+          <form onSubmit={handleFormSubmit(onSubmitNewsletter)} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Title</label>
+              <input type="text" {...formRegister('title', { required: 'Title is required' })} className="w-full border rounded px-3 py-2" />
+              {formErrors.title && <p className="text-red-600 text-sm">{formErrors.title.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Excerpt</label>
+              <input type="text" {...formRegister('excerpt', { required: 'Excerpt is required' })} className="w-full border rounded px-3 py-2" />
+              {formErrors.excerpt && <p className="text-red-600 text-sm">{formErrors.excerpt.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Content</label>
+              <textarea {...formRegister('content', { required: 'Content is required' })} className="w-full border rounded px-3 py-2 min-h-[120px]" />
+              {formErrors.content && <p className="text-red-600 text-sm">{formErrors.content.message}</p>}
+            </div>
+            <div className="flex items-center space-x-2">
+              <input type="checkbox" {...formRegister('published')} id="published" />
+              <label htmlFor="published" className="text-sm">Publish now</label>
+            </div>
+            <div className="flex space-x-2">
+              <button type="submit" className="btn-primary">{editingNewsletter ? 'Update' : 'Create'}</button>
+              <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); setEditingNewsletter(null); }}>Cancel</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Newsletters Table */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 className="text-xl font-bold mb-4">All Newsletters</h2>
+        {loadingNewsletters ? (
+          <p>Loading newsletters...</p>
+        ) : newsletters.length === 0 ? (
+          <p>No newsletters found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Published</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {newsletters.map((n) => (
+                  <tr key={n.id || n._id} className="hover:bg-gray-50">
+                    <td className="px-4 py-2 font-medium">{n.title}</td>
+                    <td className="px-4 py-2">{n.published ? 'Yes' : 'No'}</td>
+                    <td className="px-4 py-2 space-x-2">
+                      <button className="btn-secondary" onClick={() => handleEdit(n)}>Edit</button>
+                      <button className="btn-danger" onClick={() => deleteMutation.mutate(n.id || n._id)}>Delete</button>
+                      {!n.published && (
+                        <button className="btn-primary" onClick={() => updateMutation.mutate({ id: n.id || n._id, data: { ...n, published: true } })}>Publish</button>
+                      )}
+                      {n.published && (
+                        <button className="btn-primary" onClick={() => sendMutation.mutate(n.id || n._id)}>Send</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Subscribers Table */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-bold mb-4">Subscribers</h2>
+        {loadingSubs ? (
+          <p>Loading subscribers...</p>
+        ) : subscriberData.subscriptions.length === 0 ? (
+          <p>No subscribers found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Subscribed At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {subscriberData.subscriptions.map((s) => (
+                  <tr key={s.id || s._id} className="hover:bg-gray-50">
+                    <td className="px-4 py-2">{s.email}</td>
+                    <td className="px-4 py-2">{new Date(s.subscribedAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
