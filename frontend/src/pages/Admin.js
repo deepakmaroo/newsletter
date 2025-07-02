@@ -380,7 +380,7 @@ const Admin = () => {
                     <td className="px-4 py-2">{s.email}</td>
                     <td className="px-4 py-2">{new Date(s.subscribedAt).toLocaleString()}</td>
                     <td className="px-4 py-2 space-x-2">
-                      {s.isActive ? (
+                      {(s.isActive === undefined || s.isActive) ? (
                         <button className="btn-danger" onClick={() => unsubscribeMutation.mutate(s.email)}>Unsubscribe</button>
                       ) : (
                         <button className="btn-primary" onClick={() => resubscribeMutation.mutate(s.email)}>Resubscribe</button>
