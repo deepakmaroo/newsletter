@@ -18,7 +18,8 @@
     "postcss": "^8.4.29",
     "lucide-react": "^0.279.0",
     "react-hot-toast": "^2.4.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "react-quill": "^2.0.0"
   },
   "scripts": {
     "start": "react-scripts start",

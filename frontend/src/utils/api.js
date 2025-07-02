@@ -83,10 +83,27 @@ export const fetchAllSubscriptions = async (token) => {
 };
 
 export const sendNewsletter = async (id, token) => {
-  const response = await api.post(`/newsletters/${id}/send`, {}, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return response.data;
+  try {
+    const response = await api.post(`/newsletters/${id}/send`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to send newsletter:', error);
+    throw error;
+  }
+};
+
+export const testSendNewsletter = async (id, email, token) => {
+  try {
+    const response = await api.post(`/newsletters/${id}/test-send`, { email }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to send newsletter to email', email, ':', error);
+    throw error;
+  }
 };
 
 export default api;

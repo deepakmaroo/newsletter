@@ -4,6 +4,9 @@ import { Shield, Eye, EyeOff, Users, FileText, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { loginAdmin } from '../utils/api';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+
 import {
   fetchAllNewsletters,
   createNewsletter,
@@ -12,8 +15,52 @@ import {
   fetchAllSubscriptions,
   sendNewsletter,
   subscribeToNewsletter,
-  unsubscribeFromNewsletter
+  unsubscribeFromNewsletter,
+  testSendNewsletter
 } from '../utils/api';
+
+// Custom toolbar for advanced rich text features
+const quillModules = {
+  toolbar: [
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'align': [] }],
+    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+    ['blockquote', 'code-block'],
+    ['link', 'image'],
+    ['clean']
+  ]
+};
+const quillFormats = [
+  'header', 'bold', 'italic', 'underline', 'strike',
+  'color', 'background', 'align',
+  'list', 'bullet', 'blockquote', 'code-block',
+  'link', 'image'
+];
+
+const TABS = {
+  NEWSLETTERS: 'Newsletters',
+  SUBSCRIBERS: 'Subscribers',
+};
+
+// Preview modal component
+function PreviewModal({ open, onClose, title, content }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
+        <button onClick={onClose} className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl">&times;</button>
+        <h2 className="text-2xl font-bold mb-4">Preview: {title}</h2>
+        <div
+          className="ql-editor max-w-none border border-gray-100 rounded bg-gray-50"
+          style={{ minHeight: 180, maxHeight: 500, overflowY: 'auto', padding: 16 }}
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+      </div>
+    </div>
+  );
+}
 
 const Admin = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -22,6 +69,10 @@ const Admin = () => {
   const [token, setToken] = useState('');
   const [editingNewsletter, setEditingNewsletter] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [failedEmails, setFailedEmails] = useState([]);
+  const [activeTab, setActiveTab] = useState(TABS.NEWSLETTERS);
+  const [editorValue, setEditorValue] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
   const queryClient = useQueryClient();
   
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -67,9 +118,22 @@ const Admin = () => {
     onError: () => toast.error('Failed to delete newsletter')
   });
   const sendMutation = useMutation((id) => sendNewsletter(id, token), {
-    onSuccess: (data) => toast.success(data.message || 'Newsletter sent!'),
-    onError: () => toast.error('Failed to send newsletter')
+    onSuccess: (data) => {
+      toast.success(data.message || 'Newsletter sent!');
+      setFailedEmails(data.failedEmails || []);
+    },
+    onError: () => {
+      toast.error('Failed to send newsletter');
+      setFailedEmails([]);
+    }
   });
+  const testSendMutation = useMutation(
+    ({ id, email }) => testSendNewsletter(id, email, token),
+    {
+      onSuccess: (data) => toast.success(data.message || 'Test email sent!'),
+      onError: () => toast.error('Failed to send test email'),
+    }
+  );
 
   // Mutations for subscriber management
   const unsubscribeMutation = useMutation(
@@ -102,16 +166,19 @@ const Admin = () => {
   } = useForm();
 
   const onSubmitNewsletter = (data) => {
+    const payload = { ...data, content: editorValue };
     if (editingNewsletter) {
-      updateMutation.mutate({ id: editingNewsletter.id || editingNewsletter._id, data });
+      updateMutation.mutate({ id: editingNewsletter.id || editingNewsletter._id, data: payload });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(payload);
     }
   };
 
   const handleEdit = (newsletter) => {
     setEditingNewsletter(newsletter);
     setShowForm(true);
+    setEditorValue(newsletter.content || '');
+    setFailedEmails([]); // Clear failed emails when editing
     resetForm({
       title: newsletter.title,
       content: newsletter.content,
@@ -121,8 +188,11 @@ const Admin = () => {
   };
 
   const handleCreate = () => {
+    setActiveTab(TABS.NEWSLETTERS); // Always switch to Newsletters tab
     setEditingNewsletter(null);
     setShowForm(true);
+    setEditorValue('');
+    setFailedEmails([]); // Clear failed emails when creating
     resetForm({ title: '', content: '', excerpt: '', published: false });
   };
 
@@ -156,6 +226,12 @@ const Admin = () => {
       setIsLoggedIn(true);
     }
   }, []);
+
+  // When switching tabs, clear failedEmails
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setFailedEmails([]);
+  };
 
   if (!isLoggedIn) {
     return (
@@ -285,114 +361,160 @@ const Admin = () => {
         </div>
       </div>
 
-      {/* Newsletter Form */}
-      {showForm && (
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-          <h2 className="text-xl font-bold mb-4">{editingNewsletter ? 'Edit Newsletter' : 'Create Newsletter'}</h2>
-          <form onSubmit={handleFormSubmit(onSubmitNewsletter)} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Title</label>
-              <input type="text" {...formRegister('title', { required: 'Title is required' })} className="w-full border rounded px-3 py-2" />
-              {formErrors.title && <p className="text-red-600 text-sm">{formErrors.title.message}</p>}
+      {/* Tab Navigation (moved below tiles) */}
+      <div className="mb-8 flex space-x-4 border-b">
+        {Object.values(TABS).map(tab => (
+          <button
+            key={tab}
+            className={`px-4 py-2 font-medium border-b-2 transition-colors duration-200 ${activeTab === tab ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-blue-600'}`}
+            onClick={() => handleTabChange(tab)}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === TABS.NEWSLETTERS && (
+        <>
+          {/* Newsletter Form */}
+          {showForm && (
+            <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+              <h2 className="text-xl font-bold mb-4">{editingNewsletter ? 'Edit Newsletter' : 'Create Newsletter'}</h2>
+              <form onSubmit={handleFormSubmit(onSubmitNewsletter)} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Title</label>
+                  <input type="text" {...formRegister('title', { required: 'Title is required' })} className="w-full border rounded px-3 py-2" />
+                  {formErrors.title && <p className="text-red-600 text-sm">{formErrors.title.message}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Excerpt</label>
+                  <input type="text" {...formRegister('excerpt', { required: 'Excerpt is required' })} className="w-full border rounded px-3 py-2" />
+                  {formErrors.excerpt && <p className="text-red-600 text-sm">{formErrors.excerpt.message}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Content</label>
+                  <ReactQuill
+                    theme="snow"
+                    value={editorValue}
+                    onChange={setEditorValue}
+                    className="bg-white"
+                    style={{ minHeight: 180, marginBottom: 8 }}
+                    modules={quillModules}
+                    formats={quillFormats}
+                  />
+                  {formErrors.content && <p className="text-red-600 text-sm">{formErrors.content.message}</p>}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" {...formRegister('published')} id="published" />
+                  <label htmlFor="published" className="text-sm">Publish now</label>
+                </div>
+                <div className="flex space-x-2">
+                  <button type="submit" className="btn-primary">{editingNewsletter ? 'Update' : 'Create'}</button>
+                  <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); setEditingNewsletter(null); }}>Cancel</button>
+                  <button type="button" className="btn-outline" onClick={() => setShowPreview(true)}>Preview</button>
+                </div>
+              </form>
+              <PreviewModal open={showPreview} onClose={() => setShowPreview(false)} title={formRegister('title').value || (editingNewsletter && editingNewsletter.title) || ''} content={editorValue} />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Excerpt</label>
-              <input type="text" {...formRegister('excerpt', { required: 'Excerpt is required' })} className="w-full border rounded px-3 py-2" />
-              {formErrors.excerpt && <p className="text-red-600 text-sm">{formErrors.excerpt.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Content</label>
-              <textarea {...formRegister('content', { required: 'Content is required' })} className="w-full border rounded px-3 py-2 min-h-[120px]" />
-              {formErrors.content && <p className="text-red-600 text-sm">{formErrors.content.message}</p>}
-            </div>
-            <div className="flex items-center space-x-2">
-              <input type="checkbox" {...formRegister('published')} id="published" />
-              <label htmlFor="published" className="text-sm">Publish now</label>
-            </div>
-            <div className="flex space-x-2">
-              <button type="submit" className="btn-primary">{editingNewsletter ? 'Update' : 'Create'}</button>
-              <button type="button" className="btn-secondary" onClick={() => { setShowForm(false); setEditingNewsletter(null); }}>Cancel</button>
-            </div>
-          </form>
-        </div>
+          )}
+
+          {/* Newsletters Table */}
+          <div className="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 className="text-xl font-bold mb-4">All Newsletters</h2>
+            {failedEmails.length > 0 && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded">
+                <h3 className="font-semibold text-red-700 mb-2">Failed to send to the following emails:</h3>
+                <ul className="list-disc pl-6 text-red-700">
+                  {failedEmails.map(email => <li key={email}>{email}</li>)}
+                </ul>
+              </div>
+            )}
+            {loadingNewsletters ? (
+              <p>Loading newsletters...</p>
+            ) : newsletters.length === 0 ? (
+              <p>No newsletters found.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Published</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {newsletters.map((n) => (
+                      <tr key={n.id || n._id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 font-medium">{n.title}</td>
+                        <td className="px-4 py-2">{n.published ? 'Yes' : 'No'}</td>
+                        <td className="px-4 py-2 space-x-2">
+                          <button className="btn-secondary" onClick={() => handleEdit(n)}>Edit</button>
+                          <button className="btn-danger" onClick={() => deleteMutation.mutate(n.id || n._id)}>Delete</button>
+                          {!n.published && (
+                            <button className="btn-primary" onClick={() => updateMutation.mutate({ id: n.id || n._id, data: { ...n, published: true } })}>Publish</button>
+                          )}
+                          {n.published && (
+                            <button className="btn-primary" onClick={() => sendMutation.mutate(n.id || n._id)}>Send</button>
+                          )}
+                          <button
+                            className="btn-secondary"
+                            onClick={() => {
+                              const email = window.prompt('Enter email address to send this newsletter:');
+                              if (email) testSendMutation.mutate({ id: n.id || n._id, email });
+                            }}
+                          >
+                            Send to Email
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
-      {/* Newsletters Table */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-xl font-bold mb-4">All Newsletters</h2>
-        {loadingNewsletters ? (
-          <p>Loading newsletters...</p>
-        ) : newsletters.length === 0 ? (
-          <p>No newsletters found.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Published</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {newsletters.map((n) => (
-                  <tr key={n.id || n._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 font-medium">{n.title}</td>
-                    <td className="px-4 py-2">{n.published ? 'Yes' : 'No'}</td>
-                    <td className="px-4 py-2 space-x-2">
-                      <button className="btn-secondary" onClick={() => handleEdit(n)}>Edit</button>
-                      <button className="btn-danger" onClick={() => deleteMutation.mutate(n.id || n._id)}>Delete</button>
-                      {!n.published && (
-                        <button className="btn-primary" onClick={() => updateMutation.mutate({ id: n.id || n._id, data: { ...n, published: true } })}>Publish</button>
-                      )}
-                      {n.published && (
-                        <button className="btn-primary" onClick={() => sendMutation.mutate(n.id || n._id)}>Send</button>
-                      )}
-                    </td>
+      {activeTab === TABS.SUBSCRIBERS && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold mb-4">Subscribers</h2>
+          {loadingSubs ? (
+            <p>Loading subscribers...</p>
+          ) : subscriberData.subscriptions.length === 0 ? (
+            <p>No subscribers found.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Subscribed At</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Subscribers Table */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4">Subscribers</h2>
-        {loadingSubs ? (
-          <p>Loading subscribers...</p>
-        ) : subscriberData.subscriptions.length === 0 ? (
-          <p>No subscribers found.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Subscribed At</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {subscriberData.subscriptions.map((s) => (
-                  <tr key={s.id || s._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2">{s.email}</td>
-                    <td className="px-4 py-2">{new Date(s.subscribedAt).toLocaleString()}</td>
-                    <td className="px-4 py-2 space-x-2">
-                      {(s.isActive === undefined || s.isActive) ? (
-                        <button className="btn-danger" onClick={() => unsubscribeMutation.mutate(s.email)}>Unsubscribe</button>
-                      ) : (
-                        <button className="btn-primary" onClick={() => resubscribeMutation.mutate(s.email)}>Resubscribe</button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                </thead>
+                <tbody>
+                  {subscriberData.subscriptions.map((s) => (
+                    <tr key={s.id || s._id} className="hover:bg-gray-50">
+                      <td className="px-4 py-2">{s.email}</td>
+                      <td className="px-4 py-2">{new Date(s.subscribedAt).toLocaleString()}</td>
+                      <td className="px-4 py-2 space-x-2">
+                        {(s.isActive === undefined || s.isActive) ? (
+                          <button className="btn-danger" onClick={() => unsubscribeMutation.mutate(s.email)}>Unsubscribe</button>
+                        ) : (
+                          <button className="btn-primary" onClick={() => resubscribeMutation.mutate(s.email)}>Resubscribe</button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
