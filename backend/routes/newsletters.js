@@ -25,18 +25,18 @@ function prepareNewsletterContent(html) {
     allowedStyles: {
       '*': {
         // Allow only safe inline styles
-        'color': [/^.*$/],
-        'background-color': [/^.*$/],
-        'text-align': [/^.*$/],
-        'font-weight': [/^.*$/],
-        'font-size': [/^.*$/],
-        'font-family': [/^.*$/],
-        'width': [/^.*$/],
-        'height': [/^.*$/],
-        'border': [/^.*$/],
-        'margin': [/^.*$/],
-        'padding': [/^.*$/],
-        'display': [/^.*$/]
+        'color': [/^#[0-9a-fA-F]{3,6}$/, /^rgb\((\d{1,3},\s*){2}\d{1,3}\)$/, /^rgba\((\d{1,3},\s*){3}\d(\.\d+)?\)$/],
+        'background-color': [/^#[0-9a-fA-F]{3,6}$/, /^rgb\((\d{1,3},\s*){2}\d{1,3}\)$/, /^rgba\((\d{1,3},\s*){3}\d(\.\d+)?\)$/],
+        'text-align': [/^left$/, /^right$/, /^center$/, /^justify$/],
+        'font-weight': [/^normal$/, /^bold$/, /^bolder$/, /^lighter$/, /^[1-9]00$/],
+        'font-size': [/^\d+(px|em|rem|%)$/],
+        'font-family': [/^[a-zA-Z0-9,\s\-]+$/],
+        'width': [/^\d+(px|%)$/],
+        'height': [/^\d+(px|%)$/],
+        'border': [/^none$/, /^(\d+px\s)?(solid|dashed|dotted)\s#[0-9a-fA-F]{3,6}$/],
+        'margin': [/^\d+(px|%)$/],
+        'padding': [/^\d+(px|%)$/],
+        'display': [/^block$/, /^inline$/, /^inline-block$/, /^flex$/]
       }
     },
     allowedSchemes: ['http', 'https', 'data'],
