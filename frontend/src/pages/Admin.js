@@ -415,7 +415,7 @@ const Admin = () => {
                   <button type="button" className="btn-outline" onClick={() => setShowPreview(true)}>Preview</button>
                 </div>
               </form>
-              <PreviewModal open={showPreview} onClose={() => setShowPreview(false)} title={formRegister('title').value || (editingNewsletter && editingNewsletter.title) || ''} content={editorValue} />
+              <PreviewModal open={showPreview} onClose={() => setShowPreview(false)} title={getValues('title') || (editingNewsletter && editingNewsletter.title) || ''} content={editorValue} />
             </div>
           )}
 
