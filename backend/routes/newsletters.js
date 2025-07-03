@@ -48,12 +48,13 @@ function prepareNewsletterContent(html) {
 
 // Modern HTML email template
 function getEmailHtmlTemplate({ title, content }) {
+  const sanitizedTitle = sanitizeHtml(title, { allowedTags: [], allowedAttributes: {} });
   return `<!DOCTYPE html>
   <html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title}</title>
+    <title>${sanitizedTitle}</title>
     <style>
       body { background: #f4f4f7; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
       .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding: 32px 24px; }
