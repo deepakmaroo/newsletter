@@ -19,7 +19,9 @@
     "express-validator": "^7.0.1",
     "nodemailer": "^6.9.4",
     "helmet": "^7.0.0",
-    "express-rate-limit": "^6.10.0"
+    "express-rate-limit": "^6.10.0",
+    "html-to-text": "^9.0.5",
+    "sanitize-html": "^2.12.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

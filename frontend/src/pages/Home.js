@@ -1,12 +1,29 @@
 import React from 'react';
 import { useQuery } from 'react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Users, ArrowRight } from 'lucide-react';
 import NewsletterCard from '../components/NewsletterCard';
 import { fetchNewsletters } from '../utils/api';
+import 'react-quill/dist/quill.snow.css';
 
 const Home = () => {
   const { data: newsletters, isLoading, error } = useQuery('newsletters', fetchNewsletters);
+  const navigate = useNavigate();
+
+  // Handler for viewing the latest issue
+  const handleViewLatest = () => {
+    if (!newsletters || newsletters.length === 0) return;
+    // Sort by publishedAt or createdAt descending
+    const sorted = [...newsletters].sort((a, b) => {
+      const dateA = new Date(a.publishedAt || a.createdAt || 0);
+      const dateB = new Date(b.publishedAt || b.createdAt || 0);
+      return dateB - dateA;
+    });
+    const latest = sorted[0];
+    if (latest) {
+      navigate(`/newsletter/${latest.id || latest._id}`);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -28,13 +45,15 @@ const Home = () => {
               <Mail className="h-5 w-5 mr-2" />
               Subscribe Now
             </Link>
-            <Link 
-              to="#newsletters" 
-              className="btn-secondary inline-flex items-center justify-center"
+            <button
+              type="button"
+              className="btn-secondary inline-flex items-center justify-center disabled:opacity-50"
+              onClick={handleViewLatest}
+              disabled={!newsletters || newsletters.length === 0}
             >
-              View Latest Issues
+              View Latest Issue
               <ArrowRight className="h-5 w-5 ml-2" />
-            </Link>
+            </button>
           </div>
         </div>
       </section>

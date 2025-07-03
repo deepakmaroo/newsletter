@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Mail, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { subscribeToNewsletter, checkSubscriptionStatus } from '../utils/api';
+import { subscribeToNewsletter } from '../utils/api';
 
 const Subscribe = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -20,20 +20,6 @@ const Subscribe = () => {
       toast.error(error.response?.data?.message || 'Failed to subscribe. Please try again.');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const checkStatus = async (email) => {
-    try {
-      const status = await checkSubscriptionStatus(email);
-      if (status.isSubscribed) {
-        toast.success('You are already subscribed!');
-        setIsSubscribed(true);
-      } else {
-        toast.error('Email not found in our subscription list.');
-      }
-    } catch (error) {
-      toast.error('Error checking subscription status.');
     }
   };
 

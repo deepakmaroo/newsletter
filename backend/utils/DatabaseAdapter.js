@@ -121,6 +121,9 @@ class DatabaseAdapter {
   }
 
   async createSubscription(subscriptionData) {
+    if (typeof subscriptionData.isActive === 'undefined') {
+      subscriptionData.isActive = true;
+    }
     if (this.models.dbType === 'mongodb') {
       const subscription = new this.models.Subscription(subscriptionData);
       return await subscription.save();
@@ -165,7 +168,9 @@ class DatabaseAdapter {
       delete obj.__v;
       return obj;
     } else {
-      return document.dataValues || document;
+      const obj = document.dataValues ? { ...document.dataValues } : { ...document };
+      if (!obj.id && obj._id) obj.id = obj._id;
+      return obj;
     }
   }
 

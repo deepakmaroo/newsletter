@@ -76,21 +76,20 @@ const NewsletterDetail = () => {
               <Calendar className="h-4 w-4 mr-1" />
               {formatDate(newsletter.publishedAt)}
             </div>
-            
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+
+            <h1 className="text-4xl font-bold text-gray-900 mb-4" style={{ textAlign: 'center' }}>
               {newsletter.title}
             </h1>
             
-            <p className="text-xl text-gray-600 leading-relaxed">
+            {/* <p className="text-xl text-gray-600 leading-relaxed">
               {newsletter.excerpt}
-            </p>
+            </p> */}
           </header>
 
           {/* Content */}
-          <div className="prose max-w-none">
+          <div className="ql-editor max-w-none bg-gray-50 border border-gray-100 rounded p-4 prose prose-lg">
             <div 
               dangerouslySetInnerHTML={{ __html: newsletter.content.replace(/\n/g, '<br />') }}
-              className="whitespace-pre-wrap"
             />
           </div>
         </div>

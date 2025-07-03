@@ -160,10 +160,10 @@ Building scalable APIs requires planning, but following these principles will se
 
     // Create sample subscriptions
     const subscriptions = [
-      { email: 'subscriber1@example.com' },
-      { email: 'subscriber2@example.com' },
-      { email: 'subscriber3@example.com' },
-      { email: 'test@example.com' }
+      { email: 'subscriber1@example.com', isActive: true, subscribedAt: new Date() },
+      { email: 'subscriber2@example.com', isActive: true, subscribedAt: new Date() },
+      { email: 'subscriber3@example.com', isActive: true, subscribedAt: new Date() },
+      { email: 'test@example.com', isActive: true, subscribedAt: new Date() }
     ];
 
     for (const subData of subscriptions) {
