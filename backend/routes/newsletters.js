@@ -250,7 +250,7 @@ router.post('/:id/send', [auth, adminAuth], async (req, res) => {
     // Setup Nodemailer transporter
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
+      port: parseInt(process.env.SMTP_PORT, 10),
       secure: false,
       auth: {
         user: process.env.SMTP_USER,
