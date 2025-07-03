@@ -58,6 +58,7 @@ function getEmailHtmlTemplate({ title, content }) {
       body { background: #f4f4f7; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
       .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding: 32px 24px; }
       h1, h2, h3 { color: #2d3748; }
+      h1 { text-align: center; } /* Center align the title */
       p, li { color: #4a5568; line-height: 1.7; }
       a { color: #3182ce; text-decoration: underline; }
       img { max-width: 100%; border-radius: 4px; }
@@ -148,8 +149,8 @@ router.post('/', [
   auth,
   adminAuth,
   body('title').trim().isLength({ min: 1 }).withMessage('Title is required'),
-  body('content').trim().isLength({ min: 1 }).withMessage('Content is required'),
-  body('excerpt').trim().isLength({ min: 1 }).withMessage('Excerpt is required')
+  body('content').trim().isLength({ min: 1 }).withMessage('Content is required')
+  // Excerpt validation removed
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -157,12 +158,13 @@ router.post('/', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { title, content, excerpt, published } = req.body;
+    const { title, content, published } = req.body;
 
+    // Always provide excerpt as empty string if not present
     const newsletterData = {
       title,
       content,
-      excerpt,
+      excerpt: 'No excerpt',
       published: published || false,
       publishedAt: published ? new Date() : null
     };
@@ -180,8 +182,8 @@ router.put('/:id', [
   auth,
   adminAuth,
   body('title').trim().isLength({ min: 1 }).withMessage('Title is required'),
-  body('content').trim().isLength({ min: 1 }).withMessage('Content is required'),
-  body('excerpt').trim().isLength({ min: 1 }).withMessage('Excerpt is required')
+  body('content').trim().isLength({ min: 1 }).withMessage('Content is required')
+  // Excerpt validation removed
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -189,18 +191,18 @@ router.put('/:id', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { title, content, excerpt, published } = req.body;
+    const { title, content, published } = req.body;
     
     let newsletter = await db.findNewsletterByIdForUpdate(req.params.id);
     if (!newsletter) {
       return res.status(404).json({ message: 'Newsletter not found' });
     }
 
-    // Prepare update data
+    // Always provide excerpt as empty string if not present
     const updateData = {
       title,
       content,
-      excerpt,
+      excerpt: 'No excerpt',
       published
     };
 
@@ -253,6 +255,9 @@ router.post('/:id/send', [auth, adminAuth], async (req, res) => {
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
+      },
+      tls: {
+        rejectUnauthorized: false
       }
     });
 
@@ -270,11 +275,15 @@ router.post('/:id/send', [auth, adminAuth], async (req, res) => {
       })
     ));
 
+    // Collect failed emails and reasons
     const failedEmails = sendResults
-      .map((r, i) => (r.status === 'rejected' ? subscribers[i].email : null))
+      .map((r, i) => r.status === 'rejected' ? { email: subscribers[i].email, reason: r.reason && r.reason.message ? r.reason.message : String(r.reason) } : null)
       .filter(Boolean);
     const successCount = sendResults.length - failedEmails.length;
     const failCount = failedEmails.length;
+    if (failCount > 0) {
+      failedEmails.forEach(f => console.error(`Failed to send to ${f.email}: ${f.reason}`));
+    }
     res.json({
       message: `Newsletter sent to ${successCount} subscribers. Failed: ${failCount}`,
       failedEmails

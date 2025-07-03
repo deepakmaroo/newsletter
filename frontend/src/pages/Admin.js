@@ -162,11 +162,14 @@ const Admin = () => {
     register: formRegister,
     handleSubmit: handleFormSubmit,
     reset: resetForm,
+    getValues, // <-- Add this line to destructure getValues
     formState: { errors: formErrors }
   } = useForm();
 
   const onSubmitNewsletter = (data) => {
     const payload = { ...data, content: editorValue };
+    // Remove excerpt from payload if present
+    delete payload.excerpt;
     if (editingNewsletter) {
       updateMutation.mutate({ id: editingNewsletter.id || editingNewsletter._id, data: payload });
     } else {
@@ -182,7 +185,6 @@ const Admin = () => {
     resetForm({
       title: newsletter.title,
       content: newsletter.content,
-      excerpt: newsletter.excerpt,
       published: newsletter.published
     });
   };
@@ -193,7 +195,7 @@ const Admin = () => {
     setShowForm(true);
     setEditorValue('');
     setFailedEmails([]); // Clear failed emails when creating
-    resetForm({ title: '', content: '', excerpt: '', published: false });
+    resetForm({ title: '', content: '', /* excerpt: '', */ published: false });
   };
 
   const onLogin = async (data) => {
@@ -388,11 +390,6 @@ const Admin = () => {
                   {formErrors.title && <p className="text-red-600 text-sm">{formErrors.title.message}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Excerpt</label>
-                  <input type="text" {...formRegister('excerpt', { required: 'Excerpt is required' })} className="w-full border rounded px-3 py-2" />
-                  {formErrors.excerpt && <p className="text-red-600 text-sm">{formErrors.excerpt.message}</p>}
-                </div>
-                <div>
                   <label className="block text-sm font-medium mb-1">Content</label>
                   <ReactQuill
                     theme="snow"
@@ -426,7 +423,11 @@ const Admin = () => {
               <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded">
                 <h3 className="font-semibold text-red-700 mb-2">Failed to send to the following emails:</h3>
                 <ul className="list-disc pl-6 text-red-700">
-                  {failedEmails.map(email => <li key={email}>{email}</li>)}
+                  {failedEmails.map((fail, idx) => (
+                    <li key={fail.email || idx}>
+                      <strong>{fail.email}</strong>: {fail.reason}
+                    </li>
+                  ))}
                 </ul>
               </div>
             )}
