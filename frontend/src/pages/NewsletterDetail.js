@@ -89,7 +89,7 @@ const NewsletterDetail = () => {
           {/* Content */}
           <div className="ql-editor max-w-none bg-gray-50 border border-gray-100 rounded p-4 prose prose-lg">
             <div 
-              dangerouslySetInnerHTML={{ __html: newsletter.content }}
+              dangerouslySetInnerHTML={{ __html: newsletter.content.replace(/\n/g, '<br />') }}
             />
           </div>
         </div>
