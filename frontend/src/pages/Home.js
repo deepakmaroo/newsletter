@@ -21,7 +21,7 @@ const Home = () => {
     });
     const latest = sorted[0];
     if (latest) {
-      navigate(`/newsletter/${latest._id || latest.id}`);
+      navigate(`/newsletter/${latest.id || latest._id}`);
     }
   };
 
