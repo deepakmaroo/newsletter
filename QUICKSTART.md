@@ -10,6 +10,7 @@
 1. **Install Node.js dependencies:**
    ```powershell
    npm run setup
+   npm install sanitize-html
    ```
 
 2. **Configure environment:**
