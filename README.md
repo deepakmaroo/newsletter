@@ -82,6 +82,7 @@ newsletter/
    # Install frontend dependencies
    cd ../frontend
    npm install
+   npm install sanitize-html
    ```
 
 3. **Environment Setup**
