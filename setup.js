@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
+const { execSync } = require('child_process');  
+console.log('   Frontend: http://localhost:3030');
+console.log('   Backend:  http://localhost:5050');
 const fs = require('fs');
 const path = require('path');
 
@@ -66,8 +68,8 @@ const setup = () => {
   console.log('3. Run "npm run dev" to start the application');
   console.log('4. Optional: Run "cd backend && npm run seed" to add sample data');
   console.log('\n📱 The app will be available at:');
-  console.log('   Frontend: http://localhost:3000');
-  console.log('   Backend:  http://localhost:5000');
+  console.log('   Frontend: http://localhost:3030');
+  console.log('   Backend:  http://localhost:5050');
 };
 
 // Run setup

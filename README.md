@@ -89,9 +89,9 @@ newsletter/
    
    Create a `.env` file in the `backend` directory:
    ```env
-   PORT=5000
+   PORT=5050
    NODE_ENV=development
-   CLIENT_URL=http://localhost:3000
+   CLIENT_URL=http://localhost:3030
    
    # Database Configuration
    # Choose: 'mongodb' or 'postgresql'
@@ -147,8 +147,8 @@ newsletter/
    ```
 
 6. **Access the Application**
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:5000
+   - Frontend: http://localhost:3030
+   - Backend API: http://localhost:5050
 
 ## API Endpoints
 
@@ -206,7 +206,7 @@ newsletter/
 ### Environment Variables
 
 Backend environment variables (`.env`):
-- `PORT` - Server port (default: 5000)
+- `PORT` - Server port (default: 5050)
 - `NODE_ENV` - Environment (development/production)
 - `CLIENT_URL` - Frontend URL for CORS
 - `DATABASE_TYPE` - Database type ('mongodb' or 'postgresql')

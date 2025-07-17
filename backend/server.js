@@ -10,12 +10,12 @@ connectDB();
 
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (needed for rate limiting behind proxy)
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5050;
 
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: process.env.CLIENT_URL || 'http://localhost:3030',
   credentials: true
 }));
 

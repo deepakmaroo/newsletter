@@ -40,9 +40,9 @@
 
 ## Access the Application
 
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000
-- **Admin Panel**: http://localhost:3000/admin
+- **Frontend**: http://localhost:3030
+- **Backend API**: http://localhost:5050
+- **Admin Panel**: http://localhost:3030/admin
 
 ## Default Admin Credentials
 - **Email**: admin@example.com
@@ -71,8 +71,8 @@
 
 2. **Port already in use:**
    - Change ports in configuration files
-   - Frontend: `package.json` (default: 3000)
-   - Backend: `.env` PORT variable (default: 5000)
+   - Frontend: `package.json` (default: 3030)
+   - Backend: `.env` PORT variable (default: 5050)
 
 3. **Dependencies issues:**
    - Delete `node_modules` folders
