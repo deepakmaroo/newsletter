@@ -5,7 +5,8 @@ This guide will help you deploy your newsletter application on a Linux server wi
 ## Prerequisites
 
 - Ubuntu/Debian server with sudo access
-- Domain name pointing to your server (optional b2. Verify backend is listening on port 5050 Verify backend is listening on port 5050t recommended)
+- Domain name pointing to your server (optional)
+- Verify backend is listening on port 5050
 - Basic knowledge of Linux commands
 
 ## Quick Deployment
