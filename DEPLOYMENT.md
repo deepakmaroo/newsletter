@@ -246,7 +246,7 @@ sudo cp -r build/* /var/www/newsletter/build/
 
 ### nginx 502 Bad Gateway
 1. Check if backend is running: `sudo systemctl status newsletter-backend`
-2. Verify backend is listening on port 5000
+2. Verify backend is listening on port 5050
 3. Check nginx error logs: `sudo tail -f /var/log/nginx/error.log`
 
 ### Database Connection Issues
