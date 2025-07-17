@@ -77,7 +77,7 @@ Create `/var/www/newsletter/backend/.env`:
 DB_TYPE=postgresql
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=newsletter_db
+DB_NAME=newsletter
 DB_USER=newsletter_user
 DB_PASS=your_password_here
 
@@ -161,9 +161,9 @@ sudo apt install postgresql postgresql-contrib
 
 # Create database and user
 sudo -u postgres psql
-CREATE DATABASE newsletter_db;
+CREATE DATABASE newsletter;
 CREATE USER newsletter_user WITH PASSWORD 'your_password_here';
-GRANT ALL PRIVILEGES ON DATABASE newsletter_db TO newsletter_user;
+GRANT ALL PRIVILEGES ON DATABASE newsletter TO newsletter_user;
 \q
 ```
 

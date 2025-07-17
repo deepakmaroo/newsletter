@@ -101,7 +101,7 @@ if [ ! -f "$APP_DIR/backend/.env" ]; then
 DB_TYPE=postgresql
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=newsletter_db
+DB_NAME=newsletter
 DB_USER=newsletter_user
 DB_PASS=your_password_here
 
