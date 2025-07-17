@@ -2,8 +2,8 @@
 
 A full-stack newsletter and subscription management system built with React and Node.js.
 
-## Features   - Frontend: http://localhost:3030
-   - Backend API: htt- `PORT` - Server port (default: 5050)://localhost:5050
+## Features
+
 - 📧 **Newsletter Subscription**: Easy email subscription with validation
 - 📰 **Newsletter Archive**: Browse and read published newsletters
 - 🔐 **Admin Dashboard**: Secure admin interface for content management
@@ -146,8 +146,8 @@ newsletter/
    ```
 
 6. **Access the Application**
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:5000
+   - Frontend: http://localhost:3030
+   - Backend API: http://localhost:5050
 
 ## API Endpoints
 
@@ -205,7 +205,7 @@ newsletter/
 ### Environment Variables
 
 Backend environment variables (`.env`):
-- `PORT` - Server port (default: 5000)
+- `PORT` - Server port (default: 5050)
 - `NODE_ENV` - Environment (development/production)
 - `CLIENT_URL` - Frontend URL for CORS
 - `DATABASE_TYPE` - Database type ('mongodb' or 'postgresql')
