@@ -1,7 +1,10 @@
 # Quick Start Guide
 
 ## Prerequisites
-- Node.js (v16+)
+- **Frontend**: http://localhost:   - Frontend: `package.json` (default: 3030)
+   - Backend: `.env` PORT variable (default: 5050)30
+- **Backend API**: http://localhost:5050
+- **Admin Panel**: http://localhost:3030/adminode.js (v16+)
 - Database: MongoDB (local or Atlas) OR PostgreSQL (local or cloud)
 - Git
 

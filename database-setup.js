@@ -31,9 +31,9 @@ const createEnvFile = (databaseType, config) => {
   const envPath = path.join(process.cwd(), 'backend', '.env');
   
   let envContent = `# Server Configuration
-PORT=5000
+PORT=5050
 NODE_ENV=development
-CLIENT_URL=http://localhost:3000
+CLIENT_URL=http://localhost:3030
 
 # Database Configuration
 DATABASE_TYPE=${databaseType}
@@ -174,8 +174,8 @@ const setup = async () => {
     console.log('3. Run "npm run seed" to add sample data (optional)');
     console.log('4. Run "npm run dev" to start the application');
     console.log('\n📱 The app will be available at:');
-    console.log('   Frontend: http://localhost:3000');
-    console.log('   Backend:  http://localhost:5000');
+    console.log('   Frontend: http://localhost:3030');
+    console.log('   Backend:  http://localhost:5050');
     console.log('\n👤 Default admin credentials (after seeding):');
     console.log('   Email: admin@example.com');
     console.log('   Password: password123');
