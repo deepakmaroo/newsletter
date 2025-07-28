@@ -1,6 +1,8 @@
 # Newsletter Subscription Web Application
 
 A full-stack newsletter and subscription management system built with React and Node.js.
+![image](https://github.com/deepakmaroo/newsletter/blob/main/dashboard.png)
+
 
 ## Features
 
