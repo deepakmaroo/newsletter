@@ -103,16 +103,16 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=newsletter
 DB_USER=newsletter_user
-DB_PASS=CHANGE_TO_SECURE_PASSWORD
+DB_PASS=your_password_here
 
 # JWT Secret
-JWT_SECRET=CHANGE_TO_SECURE_JWT_SECRET
+JWT_SECRET=your_super_secret_jwt_key_change_this
 
 # Email Configuration (SMTP)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
-SMTP_PASS=CHANGE_TO_SECURE_SMTP_PASSWORD
+SMTP_PASS=your_app_password
 FROM_EMAIL=your_email@gmail.com
 
 # Application URLs

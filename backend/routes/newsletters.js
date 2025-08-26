@@ -150,8 +150,8 @@ router.post('/', [
   auth,
   adminAuth,
   body('title').trim().isLength({ min: 1 }).withMessage('Title is required'),
-  body('content').trim().isLength({ min: 1 }).withMessage('Content is required')
-  // Excerpt validation removed
+  body('content').trim().isLength({ min: 1 }).withMessage('Content is required'),
+  body('excerpt').trim().isLength({ min: 1 }).withMessage('Excerpt is required')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -159,13 +159,12 @@ router.post('/', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { title, content, published } = req.body;
+    const { title, content, excerpt, published } = req.body;
 
-    // Always provide excerpt as empty string if not present
     const newsletterData = {
       title,
       content,
-      excerpt: 'No excerpt',
+      excerpt,
       published: published || false,
       publishedAt: published ? new Date() : null
     };
@@ -183,8 +182,8 @@ router.put('/:id', [
   auth,
   adminAuth,
   body('title').trim().isLength({ min: 1 }).withMessage('Title is required'),
-  body('content').trim().isLength({ min: 1 }).withMessage('Content is required')
-  // Excerpt validation removed
+  body('content').trim().isLength({ min: 1 }).withMessage('Content is required'),
+  body('excerpt').trim().isLength({ min: 1 }).withMessage('Excerpt is required')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -192,18 +191,17 @@ router.put('/:id', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { title, content, published } = req.body;
+    const { title, content, excerpt, published } = req.body;
     
     let newsletter = await db.findNewsletterByIdForUpdate(req.params.id);
     if (!newsletter) {
       return res.status(404).json({ message: 'Newsletter not found' });
     }
 
-    // Always provide excerpt as empty string if not present
     const updateData = {
       title,
       content,
-      excerpt: 'No excerpt',
+      excerpt,
       published
     };
 

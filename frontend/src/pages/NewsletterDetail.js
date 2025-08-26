@@ -75,15 +75,15 @@ const NewsletterDetail = () => {
             <div className="flex items-center text-sm text-gray-500 mb-4">
               <Calendar className="h-4 w-4 mr-1" />
               {formatDate(newsletter.publishedAt)}
-            </div>
-
-            <h1 className="text-4xl font-bold text-gray-900 mb-4" style={{ textAlign: 'center' }}>
+            </div>            <h1 className="text-4xl font-bold text-gray-900 mb-4" style={{ textAlign: 'center' }}>
               {newsletter.title}
             </h1>
-            
-            {/* <p className="text-xl text-gray-600 leading-relaxed">
-              {newsletter.excerpt}
-            </p> */}
+
+            {newsletter.excerpt && (
+              <p className="text-xl text-gray-600 leading-relaxed">
+                {newsletter.excerpt}
+              </p>
+            )}
           </header>
 
           {/* Content */}

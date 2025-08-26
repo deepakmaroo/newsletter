@@ -19,7 +19,13 @@
     "lucide-react": "^0.279.0",
     "react-hot-toast": "^2.4.1",
     "web-vitals": "^2.1.4",
-    "react-quill": "^2.0.0"
+    "react-quill": "^2.0.0",
+    "marked": "^9.0.0",
+    "dompurify": "^3.0.5",
+    "react-markdown": "^9.0.0",
+    "rehype-highlight": "^6.0.0",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.0"
   },
   "scripts": {
     "start": "set PORT=3030 && react-scripts start",
