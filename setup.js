@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');  
+const { execSync } = require('child_process')  
 console.log('   Frontend: http://localhost:3030');
 console.log('   Backend:  http://localhost:5050');
 const fs = require('fs');

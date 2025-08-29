@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Shield, Eye, EyeOff, Users, FileText, Plus } from 'lucide-react';
+import { Shield, Eye, EyeOff, Users, FileText, Plus, Code, Type } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { loginAdmin } from '../utils/api';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
+import ReactMarkdown from 'react-markdown';
+import rehypeHighlight from 'rehype-highlight';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
+import 'highlight.js/styles/github.css';
 
 import {
   fetchAllNewsletters,
@@ -45,18 +52,30 @@ const TABS = {
 };
 
 // Preview modal component
-function PreviewModal({ open, onClose, title, content }) {
+function PreviewModal({ open, onClose, title, content, isMarkdown = false }) {
   if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 relative">
+      <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full p-6 relative max-h-[90vh] overflow-hidden">
         <button onClick={onClose} className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl">&times;</button>
         <h2 className="text-2xl font-bold mb-4">Preview: {title}</h2>
-        <div
-          className="ql-editor max-w-none border border-gray-100 rounded bg-gray-50"
-          style={{ minHeight: 180, maxHeight: 500, overflowY: 'auto', padding: 16 }}
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
+        <div className="border border-gray-100 rounded bg-gray-50 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 120px)', padding: 16 }}>
+          {isMarkdown ? (
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeHighlight, rehypeRaw]}
+              className="prose max-w-none"
+            >
+              {content}
+            </ReactMarkdown>
+          ) : (
+            <div
+              className="ql-editor max-w-none"
+              dangerouslySetInnerHTML={{ __html: content }}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -73,6 +92,8 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState(TABS.NEWSLETTERS);
   const [editorValue, setEditorValue] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [editorMode, setEditorMode] = useState('rich'); // 'rich' or 'markdown'
+  const [markdownContent, setMarkdownContent] = useState('');
   const queryClient = useQueryClient();
   
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -167,9 +188,18 @@ const Admin = () => {
   } = useForm();
 
   const onSubmitNewsletter = (data) => {
-    const payload = { ...data, content: editorValue };
-    // Remove excerpt from payload if present
-    delete payload.excerpt;
+    // Get content based on editor mode
+    const content = editorMode === 'markdown' ? 
+      DOMPurify.sanitize(marked(markdownContent || '')) : 
+      editorValue;
+    
+    const payload = { 
+      ...data, 
+      content,
+      contentType: editorMode, // Store the content type for future editing
+      rawMarkdown: editorMode === 'markdown' ? markdownContent : undefined
+    };
+    
     if (editingNewsletter) {
       updateMutation.mutate({ id: editingNewsletter.id || editingNewsletter._id, data: payload });
     } else {
@@ -180,10 +210,23 @@ const Admin = () => {
   const handleEdit = (newsletter) => {
     setEditingNewsletter(newsletter);
     setShowForm(true);
-    setEditorValue(newsletter.content || '');
+    
+    // Set editor mode based on stored content type or detect from content
+    const contentType = newsletter.contentType || 'rich';
+    setEditorMode(contentType);
+    
+    if (contentType === 'markdown' && newsletter.rawMarkdown) {
+      setMarkdownContent(newsletter.rawMarkdown);
+      setEditorValue(''); // Clear rich text editor
+    } else {
+      setEditorValue(newsletter.content || '');
+      setMarkdownContent(''); // Clear markdown editor
+    }
+    
     setFailedEmails([]); // Clear failed emails when editing
     resetForm({
       title: newsletter.title,
+      excerpt: newsletter.excerpt,
       content: newsletter.content,
       published: newsletter.published
     });
@@ -193,9 +236,23 @@ const Admin = () => {
     setActiveTab(TABS.NEWSLETTERS); // Always switch to Newsletters tab
     setEditingNewsletter(null);
     setShowForm(true);
+    setEditorMode('rich'); // Default to rich text editor
     setEditorValue('');
+    setMarkdownContent('');
     setFailedEmails([]); // Clear failed emails when creating
-    resetForm({ title: '', content: '', /* excerpt: '', */ published: false });
+    resetForm({ title: '', excerpt: '', content: '', published: false });
+  };
+
+  const handleEditorModeChange = (mode) => {
+    setEditorMode(mode);
+    if (mode === 'markdown' && editorValue) {
+      // Convert HTML to markdown (basic conversion)
+      // For more sophisticated conversion, you could use a library like turndown
+      setMarkdownContent(''); // Start fresh for now
+    } else if (mode === 'rich' && markdownContent) {
+      // Convert markdown to HTML
+      setEditorValue(DOMPurify.sanitize(marked(markdownContent)));
+    }
   };
 
   const onLogin = async (data) => {
@@ -390,16 +447,79 @@ const Admin = () => {
                   {formErrors.title && <p className="text-red-600 text-sm">{formErrors.title.message}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Content</label>
-                  <ReactQuill
-                    theme="snow"
-                    value={editorValue}
-                    onChange={setEditorValue}
-                    className="bg-white"
-                    style={{ minHeight: 180, marginBottom: 8 }}
-                    modules={quillModules}
-                    formats={quillFormats}
+                  <label className="block text-sm font-medium mb-1">Excerpt</label>
+                  <textarea 
+                    {...formRegister('excerpt', { required: 'Excerpt is required', maxLength: { value: 200, message: 'Excerpt must be 200 characters or less' } })} 
+                    className="w-full border rounded px-3 py-2 h-20 resize-none" 
+                    placeholder="Brief description of the newsletter content (max 200 characters)"
                   />
+                  {formErrors.excerpt && <p className="text-red-600 text-sm">{formErrors.excerpt.message}</p>}
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium">Content</label>
+                    <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+                      <button
+                        type="button"
+                        onClick={() => handleEditorModeChange('rich')}
+                        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 ${
+                          editorMode === 'rich' 
+                            ? 'bg-white text-blue-600 shadow-sm' 
+                            : 'text-gray-600 hover:text-blue-600'
+                        }`}
+                      >
+                        <Type className="h-4 w-4" />
+                        <span>Rich Text</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleEditorModeChange('markdown')}
+                        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-1 ${
+                          editorMode === 'markdown' 
+                            ? 'bg-white text-blue-600 shadow-sm' 
+                            : 'text-gray-600 hover:text-blue-600'
+                        }`}
+                      >
+                        <Code className="h-4 w-4" />
+                        <span>Markdown</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {editorMode === 'rich' ? (
+                    <ReactQuill
+                      theme="snow"
+                      value={editorValue}
+                      onChange={setEditorValue}
+                      className="bg-white"
+                      style={{ minHeight: 180, marginBottom: 8 }}
+                      modules={quillModules}
+                      formats={quillFormats}
+                    />
+                  ) : (
+                    <div className="relative">
+                      <textarea
+                        value={markdownContent}
+                        onChange={(e) => setMarkdownContent(e.target.value)}
+                        className="w-full border rounded px-3 py-2 font-mono text-sm resize-none"
+                        style={{ minHeight: 200 }}
+                        placeholder="# Your Newsletter Title
+
+## Introduction
+Write your newsletter content in **Markdown** format...
+
+### Features supported:
+- **Bold** and *italic* text
+- [Links](https://example.com)
+- Lists and tables
+- Code blocks
+- And much more!"
+                      />
+                      <div className="absolute bottom-2 right-2 text-xs text-gray-400 bg-white px-2 py-1 rounded">
+                        Markdown Mode
+                      </div>
+                    </div>
+                  )}
                   {formErrors.content && <p className="text-red-600 text-sm">{formErrors.content.message}</p>}
                 </div>
                 <div className="flex items-center space-x-2">
@@ -412,7 +532,13 @@ const Admin = () => {
                   <button type="button" className="btn-outline" onClick={() => setShowPreview(true)}>Preview</button>
                 </div>
               </form>
-              <PreviewModal open={showPreview} onClose={() => setShowPreview(false)} title={getValues('title') || (editingNewsletter && editingNewsletter.title) || ''} content={editorValue} />
+              <PreviewModal 
+                open={showPreview} 
+                onClose={() => setShowPreview(false)} 
+                title={getValues('title') || (editingNewsletter && editingNewsletter.title) || ''} 
+                content={editorMode === 'markdown' ? markdownContent : editorValue}
+                isMarkdown={editorMode === 'markdown'}
+              />
             </div>
           )}
 
@@ -441,6 +567,7 @@ const Admin = () => {
                   <thead>
                     <tr>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Excerpt</th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Published</th>
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                     </tr>
@@ -449,6 +576,7 @@ const Admin = () => {
                     {newsletters.map((n) => (
                       <tr key={n.id || n._id} className="hover:bg-gray-50">
                         <td className="px-4 py-2 font-medium">{n.title}</td>
+                        <td className="px-4 py-2 text-sm text-gray-600 max-w-xs truncate">{n.excerpt || 'No excerpt'}</td>
                         <td className="px-4 py-2">{n.published ? 'Yes' : 'No'}</td>
                         <td className="px-4 py-2 space-x-2">
                           <button className="btn-secondary" onClick={() => handleEdit(n)}>Edit</button>
