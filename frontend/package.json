@@ -27,10 +27,13 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "set PORT=3030 && react-scripts start",
+    "start": "cross-env PORT=3030 react-scripts start",
+    "dev": "cross-env PORT=3030 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "start:windows": "start-dev.bat",
+    "build:windows": "build.bat"
   },
   "eslintConfig": {
     "extends": [
@@ -52,6 +55,7 @@
   },
   "proxy": "http://localhost:5050",
   "devDependencies": {
+    "cross-env": "^10.0.0",
     "react-scripts": "^5.0.1"
   }
 }
