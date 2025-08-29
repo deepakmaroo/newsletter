@@ -42,9 +42,9 @@ jobs:
         npm ci
     
     - name: Build frontend
-      run: |
-        cd frontend
-        CI=true npm run build
+      run: npm run build
+      env:
+        CI: true
     
     # Install and test backend
     - name: Install backend dependencies

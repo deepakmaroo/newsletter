@@ -7,8 +7,7 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd backend && npm run dev",
     "client": "cd frontend && npm start",
-    "build": "cd frontend && cross-env CI=true npm run build",
-    "build:windows": "cd frontend && build.bat",
+    "build": "cd frontend && npm run build",
     "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "setup": "node setup.js",
     "database-setup": "node database-setup.js",
@@ -24,8 +23,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "^8.2.2",
-    "cross-env": "^10.0.0"
+    "concurrently": "^8.2.2"
   },
   "dependencies": {
     "sanitize-html": "^2.17.0"

@@ -55,7 +55,6 @@
   },
   "proxy": "http://localhost:5050",
   "devDependencies": {
-    "cross-env": "^10.0.0",
     "react-scripts": "^5.0.1"
   }
 }
