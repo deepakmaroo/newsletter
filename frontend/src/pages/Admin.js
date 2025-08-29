@@ -54,15 +54,6 @@ const TABS = {
 // Preview modal component
 function PreviewModal({ open, onClose, title, content, isMarkdown = false }) {
   if (!open) return null;
-  
-  const getPreviewContent = () => {
-    if (isMarkdown) {
-      // Convert markdown to HTML and sanitize
-      const htmlContent = marked(content || '');
-      return DOMPurify.sanitize(htmlContent);
-    }
-    return content; // Already HTML from rich text editor
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
