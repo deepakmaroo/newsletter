@@ -1,6 +1,8 @@
 # Newsletter Subscription Web Application
 
 A full-stack newsletter and subscription management system built with React and Node.js.
+![image](https://github.com/deepakmaroo/newsletter/blob/main/dashboard.png)
+
 
 ## Features
 
@@ -113,11 +115,6 @@ newsletter/
    # Install frontend dependencies (creates frontend/package-lock.json)
    cd ../frontend
    npm install
-   
-   # For markdown support (optional - if you want markdown editing capabilities)
-   # These packages enable dual Rich Text / Markdown editor modes
-   cd ../frontend
-   npm install marked react-markdown remark-gfm rehype-raw rehype-sanitize
    ```
 
    **Package Notes:**
