@@ -8,6 +8,8 @@ const axios = require('axios');
  */
 async function verifyCaptcha(captchaId, captchaInput) {
   if (!captchaId || !captchaInput) return false;
+  // Validate captchaId is 8 alphanumeric characters
+  if (!/^[a-zA-Z0-9]{8}$/.test(captchaId)) return false;
   try {
     const response = await axios.post('https://api.opencaptcha.com/verify', {
       id: captchaId,

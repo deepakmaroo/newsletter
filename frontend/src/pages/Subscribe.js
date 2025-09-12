@@ -20,7 +20,13 @@ const Subscribe = () => {
   // Fetch CAPTCHA image
   useEffect(() => {
     async function fetchCaptcha() {
-    const res = await axios.post(OPENCAPTCHA_API, {}, { headers: { 'Content-Type': 'application/json' } });
+        // Generate a random alphanumeric string for the 'text' field
+    const randomText = Math.random().toString(36).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
+        const res = await axios.post(
+          OPENCAPTCHA_API,
+          { text: randomText },
+          { headers: { 'Content-Type': 'application/json' } }
+        );
       setCaptchaId(res.data.id);
       setCaptchaImg(res.data.image);
     }
@@ -43,9 +49,14 @@ const Subscribe = () => {
       setCaptchaInput('');
       if (captchaEnabled) {
         // Fetch new captcha after submit
-          const res = await axios.post(OPENCAPTCHA_API, {}, { headers: { 'Content-Type': 'application/json' } });
-        setCaptchaId(res.data.id);
-        setCaptchaImg(res.data.image);
+          const randomText = Math.random().toString(36).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
+          const res = await axios.post(
+            OPENCAPTCHA_API,
+            { text: randomText },
+            { headers: { 'Content-Type': 'application/json' } }
+          );
+          setCaptchaId(res.data.id);
+          setCaptchaImg(res.data.image);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to subscribe. Please try again.');
