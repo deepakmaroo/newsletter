@@ -5,6 +5,8 @@ import toast from 'react-hot-toast';
 import { subscribeToNewsletter } from '../utils/api';
 import axios from 'axios';
 
+const OPENCAPTCHA_API = process.env.REACT_APP_OPENCAPTCHA_API || 'https://api.opencaptcha.io/captcha';
+
 const Subscribe = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +20,7 @@ const Subscribe = () => {
   // Fetch CAPTCHA image
   useEffect(() => {
     async function fetchCaptcha() {
-      const res = await axios.get('https://api.opencaptcha.com/captcha');
+      const res = await axios.get(OPENCAPTCHA_API);
       setCaptchaId(res.data.id);
       setCaptchaImg(res.data.image);
     }
@@ -41,7 +43,7 @@ const Subscribe = () => {
       setCaptchaInput('');
       if (captchaEnabled) {
         // Fetch new captcha after submit
-        const res = await axios.get('https://api.opencaptcha.com/captcha');
+        const res = await axios.get(OPENCAPTCHA_API);
         setCaptchaId(res.data.id);
         setCaptchaImg(res.data.image);
       }
