@@ -20,15 +20,24 @@ const Subscribe = () => {
   // Fetch CAPTCHA image
   useEffect(() => {
     async function fetchCaptcha() {
-        // Generate a random alphanumeric string for the 'text' field
-    const randomText = Math.random().toString(36).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
-        const res = await axios.post(
-          OPENCAPTCHA_API,
-          { text: randomText },
-          { headers: { 'Content-Type': 'application/json' } }
-        );
-      setCaptchaId(res.data.id);
-      setCaptchaImg(res.data.image);
+      // Generate a random alphanumeric string for the 'text' field
+      const randomText = Math.random().toString(36).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
+      const res = await axios.post(
+        OPENCAPTCHA_API,
+        { text: randomText },
+        { headers: { 'Content-Type': 'application/json' }, responseType: 'arraybuffer' }
+      );
+      // Parse response headers for id (if available)
+      let captchaId = '';
+      if (res.headers['id']) {
+        captchaId = res.headers['id'];
+      } else if (res.data.id) {
+        captchaId = res.data.id;
+      }
+      setCaptchaId(captchaId);
+      // Convert image buffer to base64
+      const base64Img = `data:image/jpeg;base64,${Buffer.from(res.data, 'binary').toString('base64')}`;
+      setCaptchaImg(base64Img);
     }
     if (captchaEnabled) {
       fetchCaptcha();
@@ -49,14 +58,21 @@ const Subscribe = () => {
       setCaptchaInput('');
       if (captchaEnabled) {
         // Fetch new captcha after submit
-          const randomText = Math.random().toString(36).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
-          const res = await axios.post(
-            OPENCAPTCHA_API,
-            { text: randomText },
-            { headers: { 'Content-Type': 'application/json' } }
-          );
-          setCaptchaId(res.data.id);
-          setCaptchaImg(res.data.image);
+        const randomText = Math.random().toString(36).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
+        const res = await axios.post(
+          OPENCAPTCHA_API,
+          { text: randomText },
+          { headers: { 'Content-Type': 'application/json' }, responseType: 'arraybuffer' }
+        );
+        let captchaId = '';
+        if (res.headers['id']) {
+          captchaId = res.headers['id'];
+        } else if (res.data.id) {
+          captchaId = res.data.id;
+        }
+        setCaptchaId(captchaId);
+        const base64Img = `data:image/jpeg;base64,${Buffer.from(res.data, 'binary').toString('base64')}`;
+        setCaptchaImg(base64Img);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to subscribe. Please try again.');
