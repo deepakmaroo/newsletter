@@ -438,3 +438,18 @@ C:\Users\marood\Documents\workspace\node-v22.18.0-win-x64\npm.cmd install axios
 
 ### Documentation
 - [OpenCaptcha API docs](https://opencaptcha.com/api)
+
+---
+
+### Enable/Disable CAPTCHA (Frontend)
+
+To control whether CAPTCHA is shown on the subscription form, set the following in `frontend/.env`:
+
+```
+REACT_APP_ENABLE_CAPTCHA=true   # Show CAPTCHA (recommended)
+REACT_APP_ENABLE_CAPTCHA=false  # Hide CAPTCHA (not recommended for production)
+```
+
+The backend always requires CAPTCHA verification for subscriptions. The frontend controls whether the CAPTCHA widget is displayed to users.
+
+---

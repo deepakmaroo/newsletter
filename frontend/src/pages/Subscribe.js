@@ -8,33 +8,24 @@ import axios from 'axios';
 const Subscribe = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [captchaEnabled, setCaptchaEnabled] = useState(false);
+  const captchaEnabled = process.env.REACT_APP_ENABLE_CAPTCHA === 'true';
   const [captchaId, setCaptchaId] = useState('');
   const [captchaImg, setCaptchaImg] = useState('');
   const [captchaInput, setCaptchaInput] = useState('');
   const [captchaError, setCaptchaError] = useState('');
   const { register, handleSubmit, formState: { errors }, reset } = useForm();
 
-  // Fetch CAPTCHA status and image
+  // Fetch CAPTCHA image
   useEffect(() => {
-    async function fetchCaptchaStatus() {
-      try {
-        const res = await axios.get('/api/subscriptions/captcha-status');
-        setCaptchaEnabled(res.data.enabled);
-        if (res.data.enabled) {
-          fetchCaptcha();
-        }
-      } catch (err) {
-        setCaptchaEnabled(false);
-      }
-    }
     async function fetchCaptcha() {
       const res = await axios.get('https://api.opencaptcha.com/captcha');
       setCaptchaId(res.data.id);
       setCaptchaImg(res.data.image);
     }
-    fetchCaptchaStatus();
-  }, []);
+    if (captchaEnabled) {
+      fetchCaptcha();
+    }
+  }, [captchaEnabled]);
 
   const onSubmit = async (data) => {
     if (captchaEnabled && (!captchaInput || !captchaId)) {
