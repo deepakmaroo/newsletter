@@ -35,8 +35,10 @@ const Subscribe = () => {
         captchaId = res.data.id;
       }
       setCaptchaId(captchaId);
-      // Convert image buffer to base64
-      const base64Img = `data:image/jpeg;base64,${Buffer.from(res.data, 'binary').toString('base64')}`;
+      // Convert image buffer to base64 (browser compatible)
+      const base64Img = `data:image/jpeg;base64,${btoa(
+        new Uint8Array(res.data).reduce((data, byte) => data + String.fromCharCode(byte), '')
+      )}`;
       setCaptchaImg(base64Img);
     }
     if (captchaEnabled) {
@@ -71,7 +73,9 @@ const Subscribe = () => {
           captchaId = res.data.id;
         }
         setCaptchaId(captchaId);
-        const base64Img = `data:image/jpeg;base64,${Buffer.from(res.data, 'binary').toString('base64')}`;
+        const base64Img = `data:image/jpeg;base64,${btoa(
+          new Uint8Array(res.data).reduce((data, byte) => data + String.fromCharCode(byte), '')
+        )}`;
         setCaptchaImg(base64Img);
       }
     } catch (error) {
