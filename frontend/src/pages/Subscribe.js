@@ -18,29 +18,28 @@ const Subscribe = () => {
   const { register, handleSubmit, formState: { errors }, reset } = useForm();
 
   // Fetch CAPTCHA image
-  useEffect(() => {
-    async function fetchCaptcha() {
-      // Generate a random alphanumeric string for the 'text' field
-      const randomText = Math.random().toString(36).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
-      const res = await axios.post(
-        OPENCAPTCHA_API,
-        { text: randomText },
-        { headers: { 'Content-Type': 'application/json' }, responseType: 'arraybuffer' }
-      );
-      // Parse response headers for id (if available)
-      let captchaId = '';
-      if (res.headers['id']) {
-        captchaId = res.headers['id'];
-      } else if (res.data.id) {
-        captchaId = res.data.id;
-      }
-      setCaptchaId(captchaId);
-      // Convert image buffer to base64 (browser compatible)
-      const base64Img = `data:image/jpeg;base64,${btoa(
-        new Uint8Array(res.data).reduce((data, byte) => data + String.fromCharCode(byte), '')
-      )}`;
-      setCaptchaImg(base64Img);
+  const fetchCaptcha = async () => {
+    const randomText = Math.random().toString(36).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
+    const res = await axios.post(
+      OPENCAPTCHA_API,
+      { text: randomText },
+      { headers: { 'Content-Type': 'application/json' }, responseType: 'arraybuffer' }
+    );
+    let captchaId = '';
+    if (res.headers['id']) {
+      captchaId = res.headers['id'];
+    } else if (res.data.id) {
+      captchaId = res.data.id;
+    } else {
+      captchaId = randomText;
     }
+    setCaptchaId(captchaId);
+    const base64Img = `data:image/jpeg;base64,${btoa(
+      new Uint8Array(res.data).reduce((data, byte) => data + String.fromCharCode(byte), '')
+    )}`;
+    setCaptchaImg(base64Img);
+  };
+  useEffect(() => {
     if (captchaEnabled) {
       fetchCaptcha();
     }
@@ -58,26 +57,7 @@ const Subscribe = () => {
       setIsSubscribed(true);
       reset();
       setCaptchaInput('');
-      if (captchaEnabled) {
-        // Fetch new captcha after submit
-        const randomText = Math.random().toString(36).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
-        const res = await axios.post(
-          OPENCAPTCHA_API,
-          { text: randomText },
-          { headers: { 'Content-Type': 'application/json' }, responseType: 'arraybuffer' }
-        );
-        let captchaId = '';
-        if (res.headers['id']) {
-          captchaId = res.headers['id'];
-        } else if (res.data.id) {
-          captchaId = res.data.id;
-        }
-        setCaptchaId(captchaId);
-        const base64Img = `data:image/jpeg;base64,${btoa(
-          new Uint8Array(res.data).reduce((data, byte) => data + String.fromCharCode(byte), '')
-        )}`;
-        setCaptchaImg(base64Img);
-      }
+  // Do not fetch new captcha after submit
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to subscribe. Please try again.');
     } finally {
@@ -149,6 +129,13 @@ const Subscribe = () => {
               {captchaImg && (
                 <img src={captchaImg} alt="CAPTCHA" className="mb-2" />
               )}
+              <button
+                type="button"
+                className="mb-2 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                onClick={fetchCaptcha}
+              >
+                Refresh CAPTCHA
+              </button>
               <input
                 type="text"
                 value={captchaInput}
