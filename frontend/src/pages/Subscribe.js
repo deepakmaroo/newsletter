@@ -1,28 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Mail, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { subscribeToNewsletter } from '../utils/api';
+import axios from 'axios';
 
 const Subscribe = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [captchaEnabled, setCaptchaEnabled] = useState(false);
+  const [captchaId, setCaptchaId] = useState('');
+  const [captchaImg, setCaptchaImg] = useState('');
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
   const { register, handleSubmit, formState: { errors }, reset } = useForm();
 
+  // Fetch CAPTCHA status and image
+  useEffect(() => {
+    async function fetchCaptchaStatus() {
+      try {
+        const res = await axios.get('/api/subscriptions/captcha-status');
+        setCaptchaEnabled(res.data.enabled);
+        if (res.data.enabled) {
+          fetchCaptcha();
+        }
+      } catch (err) {
+        setCaptchaEnabled(false);
+      }
+    }
+    async function fetchCaptcha() {
+      const res = await axios.get('https://api.opencaptcha.com/captcha');
+      setCaptchaId(res.data.id);
+      setCaptchaImg(res.data.image);
+    }
+    fetchCaptchaStatus();
+  }, []);
+
   const onSubmit = async (data) => {
+    if (captchaEnabled && (!captchaInput || !captchaId)) {
+      setCaptchaError('Please complete the CAPTCHA.');
+      return;
+    }
     setIsLoading(true);
+    setCaptchaError('');
     try {
-      await subscribeToNewsletter(data.email);
+      await subscribeToNewsletter(data.email, captchaEnabled ? captchaId : undefined, captchaEnabled ? captchaInput : undefined);
       setIsSubscribed(true);
-      toast.success('Successfully subscribed to our newsletter!');
       reset();
+      setCaptchaInput('');
+      if (captchaEnabled) {
+        // Fetch new captcha after submit
+        const res = await axios.get('https://api.opencaptcha.com/captcha');
+        setCaptchaId(res.data.id);
+        setCaptchaImg(res.data.image);
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to subscribe. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
-
   if (isSubscribed) {
     return (
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -60,7 +97,7 @@ const Subscribe = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-lg p-8">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
               Email Address
@@ -83,6 +120,24 @@ const Subscribe = () => {
             )}
           </div>
 
+          {captchaEnabled && (
+            <div className="my-4">
+              {captchaImg && (
+                <img src={captchaImg} alt="CAPTCHA" className="mb-2" />
+              )}
+              <input
+                type="text"
+                value={captchaInput}
+                onChange={e => setCaptchaInput(e.target.value)}
+                placeholder="Enter CAPTCHA"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                required={captchaEnabled}
+              />
+              {captchaError && (
+                <p className="mt-2 text-sm text-red-600">{captchaError}</p>
+              )}
+            </div>
+          )}
           <button
             type="submit"
             disabled={isLoading}

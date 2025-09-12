@@ -2,13 +2,16 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const DatabaseAdapter = require('../utils/DatabaseAdapter');
 const nodemailer = require('nodemailer');
+const verifyCaptcha = require('../utils/verifyCaptcha');
 
 const router = express.Router();
 const db = new DatabaseAdapter();
 
 // Subscribe to newsletter
 router.post('/subscribe', [
-  body('email').isEmail().normalizeEmail().withMessage('Please enter a valid email')
+  body('email').isEmail().normalizeEmail().withMessage('Please enter a valid email'),
+  body('captchaId').notEmpty().withMessage('CAPTCHA ID is required'),
+  body('captchaInput').notEmpty().withMessage('CAPTCHA solution is required')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -16,9 +19,15 @@ router.post('/subscribe', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email } = req.body;
+    const { email, captchaId, captchaInput } = req.body;
 
-    // Check if already subscribed
+    // Always verify OpenCaptcha
+    const captchaValid = await verifyCaptcha(captchaId, captchaInput);
+    if (!captchaValid) {
+      return res.status(400).json({ message: 'CAPTCHA verification failed. Please try again.' });
+    }
+
+  // Check if already subscribed
     let subscription = await db.findSubscriptionByEmail(email);
     if (subscription && subscription.isActive) {
       return res.status(400).json({ message: 'Email already subscribed' });
