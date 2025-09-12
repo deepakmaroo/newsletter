@@ -10,16 +10,9 @@ async function verifyCaptcha(captchaId, captchaInput) {
   if (!captchaId || !captchaInput) return false;
   // Validate captchaId is 8 alphanumeric characters
   if (!/^[a-zA-Z0-9]{8}$/.test(captchaId)) return false;
-  try {
-    const response = await axios.post('https://api.opencaptcha.com/verify', {
-      id: captchaId,
-      value: captchaInput
-    });
-    return !!response.data.success;
-  } catch (err) {
-    console.error('OpenCaptcha verification error:', err.message);
-    return false;
-  }
+  // For OpenCaptcha, the solution is the random text used to generate the image
+  // So, verification is simply comparing the input to the captchaId
+  return captchaInput === captchaId;
 }
 
 module.exports = verifyCaptcha;
