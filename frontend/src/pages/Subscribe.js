@@ -20,7 +20,7 @@ const Subscribe = () => {
   // Fetch CAPTCHA image
   useEffect(() => {
     async function fetchCaptcha() {
-      const res = await axios.post(OPENCAPTCHA_API);
+    const res = await axios.post(OPENCAPTCHA_API, {}, { headers: { 'Content-Type': 'application/json' } });
       setCaptchaId(res.data.id);
       setCaptchaImg(res.data.image);
     }
@@ -43,7 +43,7 @@ const Subscribe = () => {
       setCaptchaInput('');
       if (captchaEnabled) {
         // Fetch new captcha after submit
-        const res = await axios.get(OPENCAPTCHA_API);
+          const res = await axios.post(OPENCAPTCHA_API, {}, { headers: { 'Content-Type': 'application/json' } });
         setCaptchaId(res.data.id);
         setCaptchaImg(res.data.image);
       }
