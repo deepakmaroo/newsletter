@@ -21,8 +21,8 @@ export const fetchNewsletterById = async (id) => {
 };
 
 // Subscription API functions
-export const subscribeToNewsletter = async (email) => {
-  const response = await api.post('/subscriptions/subscribe', { email });
+export const subscribeToNewsletter = async (email, captchaId, captchaInput) => {
+  const response = await api.post('/subscriptions/subscribe', { email, captchaId, captchaInput });
   return response.data;
 };
 

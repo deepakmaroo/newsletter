@@ -1,28 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Mail, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { subscribeToNewsletter } from '../utils/api';
+import axios from 'axios';
+
+const OPENCAPTCHA_API = process.env.REACT_APP_OPENCAPTCHA_API || 'https://api.opencaptcha.io/captcha';
 
 const Subscribe = () => {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const captchaEnabled = process.env.REACT_APP_ENABLE_CAPTCHA === 'true';
+  const [captchaId, setCaptchaId] = useState('');
+  const [captchaImg, setCaptchaImg] = useState('');
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
   const { register, handleSubmit, formState: { errors }, reset } = useForm();
 
+  // Fetch CAPTCHA image
+  const fetchCaptcha = async () => {
+    const randomText = Math.random().toString(36).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8);
+    const res = await axios.post(
+      OPENCAPTCHA_API,
+      { text: randomText },
+      { headers: { 'Content-Type': 'application/json' }, responseType: 'arraybuffer' }
+    );
+    let captchaId = '';
+    if (res.headers['id']) {
+      captchaId = res.headers['id'];
+    } else if (res.data.id) {
+      captchaId = res.data.id;
+    } else {
+      captchaId = randomText;
+    }
+    setCaptchaId(captchaId);
+    const base64Img = `data:image/jpeg;base64,${btoa(
+      new Uint8Array(res.data).reduce((data, byte) => data + String.fromCharCode(byte), '')
+    )}`;
+    setCaptchaImg(base64Img);
+  };
+  useEffect(() => {
+    if (captchaEnabled) {
+      fetchCaptcha();
+    }
+  }, [captchaEnabled]);
+
   const onSubmit = async (data) => {
+    if (captchaEnabled && (!captchaInput || !captchaId)) {
+      setCaptchaError('Please complete the CAPTCHA.');
+      return;
+    }
     setIsLoading(true);
+    setCaptchaError('');
     try {
-      await subscribeToNewsletter(data.email);
+      await subscribeToNewsletter(data.email, captchaEnabled ? captchaId : undefined, captchaEnabled ? captchaInput : undefined);
       setIsSubscribed(true);
-      toast.success('Successfully subscribed to our newsletter!');
       reset();
+      setCaptchaInput('');
+  // Do not fetch new captcha after submit
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to subscribe. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
-
   if (isSubscribed) {
     return (
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -60,7 +101,7 @@ const Subscribe = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-lg p-8">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
               Email Address
@@ -83,6 +124,31 @@ const Subscribe = () => {
             )}
           </div>
 
+          {captchaEnabled && (
+            <div className="my-4">
+              {captchaImg && (
+                <img src={captchaImg} alt="CAPTCHA" className="mb-2" />
+              )}
+              <button
+                type="button"
+                className="mb-2 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                onClick={fetchCaptcha}
+              >
+                Refresh CAPTCHA
+              </button>
+              <input
+                type="text"
+                value={captchaInput}
+                onChange={e => setCaptchaInput(e.target.value)}
+                placeholder="Enter CAPTCHA"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                required={captchaEnabled}
+              />
+              {captchaError && (
+                <p className="mt-2 text-sm text-red-600">{captchaError}</p>
+              )}
+            </div>
+          )}
           <button
             type="submit"
             disabled={isLoading}

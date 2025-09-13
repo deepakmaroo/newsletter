@@ -31,6 +31,7 @@ A full-stack newsletter and subscription management system built with React and 
 - **React Markdown** - Markdown rendering (optional)
 - **Remark GFM** - GitHub Flavored Markdown support (optional)
 - **Rehype Raw & Sanitize** - HTML processing and sanitization (optional)
+- **@hcaptcha/react-hcaptcha** - hCaptcha integration for spam protection
 
 ### Backend
 - **Node.js & Express** - Server framework
@@ -43,6 +44,7 @@ A full-stack newsletter and subscription management system built with React and 
 - **CORS** - Cross-origin resource sharing
 - **Sanitize HTML** - HTML content sanitization
 - **HTML-to-Text** - Convert HTML to plain text for emails
+- **axios** - Promise-based HTTP client for the browser and Node.js
 
 ## Project Structure
 
@@ -165,6 +167,9 @@ newsletter/
    SMTP_USER=your-email@gmail.com
    SMTP_PASS=your-app-password
    FROM_EMAIL=your-email@gmail.com
+
+   # hCaptcha configuration
+   HCAPTCHA_SECRET=your-hcaptcha-secret-key
    ```
 
 4. **Database Setup**
@@ -277,6 +282,7 @@ Backend environment variables (`.env`):
 - `POSTGRES_*` - PostgreSQL connection details (if using PostgreSQL)
 - `JWT_SECRET` - Secret for JWT tokens
 - `SMTP_*` - Email server configuration
+- `HCAPTCHA_SECRET` - hCaptcha secret key for backend verification
 
 ### CI/CD Workflow
 
@@ -366,6 +372,11 @@ If ports 3030 or 5050 are in use:
 - Check firewall settings for SMTP ports
 - Test SMTP settings with a simple email client first
 
+**hCaptcha Issues**
+- Ensure `HCAPTCHA_SECRET` is set in `backend/.env`
+- Verify hCaptcha site key is correctly used in the frontend
+- Check network requests to hCaptcha for any errors
+
 ## Contributing
 
 ### Development Workflow
@@ -402,3 +413,43 @@ This project is licensed under the MIT License.
 ## Support
 
 For support or questions, please open an issue in the repository.
+
+---
+
+## Anti-Spam Protection: OpenCaptcha
+
+This project uses [OpenCaptcha](https://opencaptcha.com/) to prevent spam subscriptions.
+
+### Installation
+
+**Frontend & Backend:**
+```powershell
+cd frontend
+C:\Users\marood\Documents\workspace\node-v22.18.0-win-x64\npm.cmd install axios
+
+cd ../backend
+C:\Users\marood\Documents\workspace\node-v22.18.0-win-x64\npm.cmd install axios
+```
+
+### Usage
+- The subscription form in the frontend displays an OpenCaptcha image and input field.
+- The backend verifies the OpenCaptcha solution before accepting subscriptions.
+- CAPTCHA is always required for subscriptions (controlled by frontend display).
+
+### Documentation
+- [OpenCaptcha API docs](https://opencaptcha.com/api)
+
+---
+
+### Enable/Disable CAPTCHA (Frontend)
+
+To control whether CAPTCHA is shown on the subscription form, set the following in `frontend/.env`:
+
+```
+REACT_APP_ENABLE_CAPTCHA=true   # Show CAPTCHA (recommended)
+REACT_APP_ENABLE_CAPTCHA=false  # Hide CAPTCHA (not recommended for production)
+```
+
+The backend always requires CAPTCHA verification for subscriptions. The frontend controls whether the CAPTCHA widget is displayed to users.
+
+---
