@@ -9,7 +9,7 @@ require('dotenv').config();
 connectDB();
 
 const app = express();
-app.set('trust proxy', 1); // Trust first proxy (needed for rate limiting behind proxy)
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5050;
 
 // Middleware
@@ -21,8 +21,8 @@ app.use(cors({
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100
 });
 app.use(limiter);
 
@@ -33,6 +33,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/newsletters', require('./routes/newsletters'));
 app.use('/api/subscriptions', require('./routes/subscriptions'));
+app.use('/api/privacy', require('./routes/privacy'));
 
 // Health check
 app.get('/health', (req, res) => {
